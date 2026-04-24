@@ -19,13 +19,6 @@ defmodule CondorDelSur.Domain.Seat do
 
   defstruct [:number, :reservation_id, status: :available]
 
-  @type status :: :available | :reserved | :confirmed
-  @type t :: %__MODULE__{
-          number: pos_integer(),
-          status: status(),
-          reservation_id: pos_integer() | nil
-        }
-
   def new(number) when is_integer(number) and number > 0 do
     %__MODULE__{number: number, status: :available, reservation_id: nil}
   end

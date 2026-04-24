@@ -5,12 +5,6 @@ defmodule CondorDelSur.Domain.Passenger do
 
   defstruct [:id, :name, :document]
 
-  @type t :: %__MODULE__{
-          id: pos_integer() | nil,
-          name: String.t(),
-          document: String.t()
-        }
-
   def new(attrs) do
     %__MODULE__{
       id: Map.get(attrs, :id),
