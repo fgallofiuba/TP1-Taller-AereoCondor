@@ -1,15 +1,11 @@
 defmodule CondorDelSur.FlightClient do
   @moduledoc """
-  API de cliente para hablar con `CondorDelSur.Servers.FlightServer`.
+  API de cliente para hablar con 'CondorDelSur.Servers.FlightServer'.
 
-  Esconde el patrón request/response (enviar un mensaje con `self()`
+  Esconde el patrón request/response (enviar un mensaje con self()
   como caller y esperar una respuesta) detrás de funciones normales.
   Cualquier parte del sistema que quiera interactuar con el vuelo debe
   pasar por acá.
-
-  Cada función devuelve o bien el valor útil (`{:ok, ...}` / `:ok`) o
-  un `{:error, reason}` con la razón que devolvió el servidor, o
-  `{:error, :timeout}` si no llegó respuesta a tiempo.
   """
 
   @default_server :flight_server
