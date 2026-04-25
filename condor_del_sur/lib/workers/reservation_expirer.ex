@@ -1,6 +1,6 @@
 defmodule CondorDelSur.Workers.ReservationExpirer do
   @moduledoc """
-  Worker efímero que expira una reserva si sigue `:pending` después
+  Worker efímero que expira una reserva si sigue ':pending' después
   de un tiempo dado.
   """
 

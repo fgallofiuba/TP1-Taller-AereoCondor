@@ -82,17 +82,17 @@ Un asiento puede estar en alguno de estos estados:
 Reglas mínimas esperadas
 
 * cuando una reserva se inicia correctamente:
-    * la reserva pasa a :pending
-    * el asiento pasa a :reserved
+  * la reserva pasa a :pending
+  * el asiento pasa a :reserved
 * cuando una reserva se confirma:
-    * la reserva pasa a :confirmed
-    * el asiento pasa a :confirmed
+  * la reserva pasa a :confirmed
+  * el asiento pasa a :confirmed
 * cuando una reserva se cancela antes de ser confirmada:
-    * la reserva pasa a :cancelled
-    * el asiento vuelve a :available
+  * la reserva pasa a :cancelled
+  * el asiento vuelve a :available
 * cuando una reserva no se confirma dentro de los 30 segundos:
-    * la reserva pasa a :expired
-    * el asiento vuelve a :available
+  * la reserva pasa a :expired
+  * el asiento vuelve a :available
 
 En otras palabras: iniciar una reserva no significa que el asiento quedó asignado para siempre. Significa que el sistema lo bloqueó temporalmente mientras esa reserva está abierta.
 

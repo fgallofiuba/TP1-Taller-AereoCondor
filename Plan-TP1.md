@@ -29,9 +29,9 @@ Los tests unitarios atacan la capa pura; la concurrencia se prueba en la demo.
 
 El enunciado lo pide explícito en los puntos 2 y 4:
 
-| Tipo | Características |
-|---|---|
-| **Servidor** (proceso con estado) | Vive para siempre en un loop recursivo. Ej: el servidor del vuelo. |
+| Tipo                              | Características                                                                          |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Servidor** (proceso con estado) | Vive para siempre en un loop recursivo. Ej: el servidor del vuelo.                       |
 | **Worker / Task** (tarea efímera) | Hace una cosa y muere. Ej: el timer de expiración de una reserva, la auditoría en disco. |
 
 #### Eje 3 — Comunicación síncrona simulada
@@ -121,12 +121,12 @@ condor_del_sur/
 
 ### 2.2 Las entidades del dominio (structs)
 
-| Struct | Campos |
-|---|---|
-| `Passenger` | `id`, `name`, `document` |
-| `Seat` | `number`, `status` (`:available` \| `:reserved` \| `:confirmed`), `reservation_id` |
+| Struct        | Campos                                                                                                                 |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `Passenger`   | `id`, `name`, `document`                                                                                               |
+| `Seat`        | `number`, `status` (`:available` \| `:reserved` \| `:confirmed`), `reservation_id`                                     |
 | `Reservation` | `id`, `passenger_id`, `seat_number`, `status` (`:pending` \| `:confirmed` \| `:cancelled` \| `:expired`), `created_at` |
-| `Flight` | `number`, `destination`, `seats`, `reservations`, `passengers`, `next_reservation_id` |
+| `Flight`      | `number`, `destination`, `seats`, `reservations`, `passengers`, `next_reservation_id`                                  |
 
 `seats`, `reservations` y `passengers` son maps indexados por id, igual que hace la cátedra con `Library`. Así cada operación de búsqueda es O(1) y las actualizaciones quedan limpias con `Map.put/3` y `put_in/2`.
 
