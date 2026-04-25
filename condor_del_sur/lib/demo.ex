@@ -220,8 +220,8 @@ defmodule CondorDelSur.Demo do
     IO.puts(c("    ─────────────────────────────────────────────────────", :cyan))
     IO.puts("")
 
-    boxes = seats |> Enum.map(fn s -> "[ #{s.number} ]" end) |> Enum.join("    ")
-    glyphs = seats |> Enum.map(fn s -> "  " <> seat_glyph(s) <> "   " end) |> Enum.join(" ")
+    boxes = seats |> Enum.map(fn s -> String.pad_trailing("[ #{s.number} ]", 9) end) |> Enum.join()
+    glyphs = seats |> Enum.map(fn s -> "  " <> seat_glyph(s) <> "      " end) |> Enum.join()
 
     IO.puts("        " <> boxes)
     IO.puts("        " <> glyphs)
