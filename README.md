@@ -1,10 +1,10 @@
 # Cóndor del Sur
 
-TP1 de Taller de Programación. Sistema concurrente de reserva de asientos
-para una aerolínea regional, hecho con procesos manuales en Elixir (sin
-GenServer, Supervisor, Task, Agent ni Registry).
+TP1 for Taller de Programación. Concurrent seat reservation system for a
+regional airline, built with manual processes in Elixir (no GenServer,
+Supervisor, Task, Agent or Registry).
 
-## Cómo correr
+## How to run
 
 ```
 mix compile
@@ -12,43 +12,43 @@ mix run -e "CondorDelSur.Demo.run()"
 mix test
 ```
 
-## Qué hace la demo
+## What the demo does
 
-Arranca un vuelo de 5 asientos y 6 pasajeros, y dispara seis fases:
+Sets up a flight with 5 seats and 6 passengers, and runs six phases:
 
-1. tres pasajeros compiten por el mismo asiento (solo uno gana)
-2. el ganador no llega a pagar y cancela
-3. otro pasajero reserva ese asiento y lo paga
-4. otro reserva un asiento distinto y lo cancela antes de pagar
-5. otro reserva pero no confirma — el sistema lo expira solo
-6. se intenta cancelar una reserva ya confirmada (debe rechazar)
+1. three passengers compete for the same seat (only one wins)
+2. the winner doesn't pay in time and cancels
+3. another passenger reserves that seat and pays for it
+4. another reserves a different seat and cancels before paying
+5. another reserves but doesn't confirm — the system expires it on its own
+6. an attempt is made to cancel an already-confirmed reservation (must reject)
 
-Al final imprime el estado completo del vuelo.
+At the end it prints the full state of the flight.
 
-Para que dure pocos segundos, la ventana de expiración está bajada a 3
-segundos. Cambiando `@expire_after_ms` en `lib/demo.ex` se vuelve a 30.
+To keep the demo short, the expiration window is set to 3 seconds. Change
+`@expire_after_ms` in `lib/demo.ex` to bring it back to 30.
 
-## Estructura
+## Structure
 
 ```
 condor_del_sur/
 ├── mix.exs
 ├── README.md
 ├── lib/
-│   ├── condor_del_sur.ex           # Módulo raíz 
-│   ├── domain/                     # Capa pura (sin procesos)
+│   ├── condor_del_sur.ex           # Root module
+│   ├── domain/                     # Pure layer (no processes)
 │   │   ├── passenger.ex
 │   │   ├── seat.ex
 │   │   ├── reservation.ex
 │   │   └── flight.ex
-│   ├── servers/                    # Procesos con estado (loops)
-│   │   ├── flight_server.ex        # El corazon del sistema
-│   │   └── audit_server.ex         # Auditoría (segundo proceso con estado)
-│   ├── workers/                    # Procesos efímeros (nacen, hacen, mueren)
-│   │   ├── reservation_expirer.ex  # Timer de 30s por reserva
-│   │   └── payment_worker.ex       # Simula pasarela de pago (demora aleatoria)
-│   ├── flight_client.ex            # API que maneja la abstraccion del server
-│   └── demo.ex                     # Maneja la demo por consola
+│   ├── servers/                    # Stateful processes (loops)
+│   │   ├── flight_server.ex        # The heart of the system
+│   │   └── audit_server.ex         # Audit log (second stateful process)
+│   ├── workers/                    # Ephemeral processes (spawn, do, die)
+│   │   ├── reservation_expirer.ex  # 30s timer per reservation
+│   │   └── payment_worker.ex       # Simulates payment gateway (random delay)
+│   ├── flight_client.ex            # API that wraps the server's send/receive
+│   └── demo.ex                     # Drives the console demo
 └── test/
     ├── domain/
     │   ├── flight_test.ex
@@ -57,68 +57,71 @@ condor_del_sur/
     └── test_helper.exs
 ```
 
-## Procesos del sistema
+## System processes
 
-`FlightServer` es el proceso dueño del estado del vuelo. Es el único que
-lee y modifica el `%Flight{}`. Atiende pedidos de reserva, confirmación,
-cancelación, expiración y consulta de estado. Se registra como
-`:flight_server`.
+`FlightServer` is the process that owns the flight's state. It's the only
+one that reads and modifies the `%Flight{}`. It handles reservation,
+confirmation, cancellation, expiration and state-query requests. Registered
+as `:flight_server`.
 
-`AuditServer` es el segundo proceso con estado. Recibe eventos del
-FlightServer (reservas creadas, confirmadas, canceladas, expiradas, pagos)
-sin esperar respuesta y los imprime en consola con timestamp. Guarda los
-últimos 100 eventos. Se registra como `:audit_server`.
+`AuditServer` is the second stateful process. It receives events from the
+FlightServer (reservations created, confirmed, cancelled, expired, payments)
+fire-and-forget and prints them to the console with a timestamp. Keeps the
+last 100 events in memory. Registered as `:audit_server`.
 
-`ReservationExpirer` es un worker efímero, uno por cada reserva que se
-inicia. Duerme la ventana de expiración y después le manda al FlightServer
-`{:expire_if_pending, reservation_id}`. Si la reserva sigue en `:pending`,
-el server la marca `:expired` y libera el asiento. Si ya cambió de estado,
-el mensaje se ignora (es idempotente).
+`ReservationExpirer` is an ephemeral worker, one per reservation. It sleeps
+for the expiration window and then sends
+`{:expire_if_pending, reservation_id}` to the FlightServer. If the
+reservation is still `:pending`, the server marks it `:expired` and
+releases the seat. If it already changed state, the message is ignored
+(it's idempotent).
 
-`PaymentWorker` es otro worker efímero, uno por intento de pago. Simula la
-pasarela con un sleep aleatorio y le contesta al FlightServer si el pago
-fue aceptado o rechazado. Desde el cliente parece una llamada síncrona,
-pero el FlightServer no se bloquea esperando: sigue atendiendo otros
-pedidos en el medio.
+`PaymentWorker` is another ephemeral worker, one per payment attempt. It
+simulates the gateway with a random sleep and replies to the FlightServer
+with the outcome. From the client's point of view it looks like a
+synchronous call, but the FlightServer doesn't block waiting for it: it
+keeps handling other requests in the meantime.
 
-Los pasajeros también son procesos. En la demo, los que compiten por el
-mismo asiento se crean con `spawn` y mandan sus pedidos al
-`:flight_server` en paralelo.
+Passengers are also processes. In the demo, the ones competing for the
+same seat are spawned with `spawn` and send their requests to
+`:flight_server` in parallel.
 
-## Dónde se usa `register` y dónde se usa `monitor`
+## Where `register` and `monitor` are used
 
-`Process.register/2` se usa en `FlightServer.start/2` y
-`AuditServer.start/1`. Los registro con un nombre fijo (`:flight_server`,
-`:audit_server`) para que cualquier proceso del sistema pueda mandarles
-mensajes sin tener que pasarse el PID por argumento. Esto es importante
-para los workers efímeros, que se crean cuando el server ya está
-corriendo y necesitan poder devolverle la respuesta sin que nadie les
-inyecte referencias.
+`Process.register/2` is used in `FlightServer.start/2` and
+`AuditServer.start/1`. They're registered with fixed names
+(`:flight_server`, `:audit_server`) so any process in the system can send
+them messages without having to thread the PID through arguments. This is
+important for the ephemeral workers, which are spawned after the server
+is already running and need to send the response back without anyone
+injecting references.
 
-`Process.monitor/1` se usa en el FlightServer cuando se crea una reserva:
-después de spawnear el `ReservationExpirer`, el server lo monitorea y
-guarda el `ref` en su estado (`expirers: %{ref => reservation_id}`).
-Cuando el worker termina, el server recibe
-`{:DOWN, ref, :process, _pid, _reason}` y limpia esa entrada del mapa.
-Sirve para detectar que el worker terminó sin tener que esperarlo, y para
-no acumular refs muertas en el estado.
+`Process.monitor/1` is used in the FlightServer when a reservation is
+created: right after spawning the `ReservationExpirer`, the server
+monitors it and stores the `ref` in its state
+(`expirers: %{ref => reservation_id}`). When the worker terminates, the
+server receives `{:DOWN, ref, :process, _pid, _reason}` and removes that
+entry from the map. This lets the server detect that the worker finished
+without having to wait for it, and avoids accumulating dead refs in
+state.
 
-## Concurrencia
+## Concurrency
 
-El estado del vuelo solo lo toca el FlightServer. Cualquier operación
-sobre el vuelo es un mensaje a su mailbox, y la mailbox funciona como
-sección crítica natural: el server procesa un mensaje a la vez, así que
-nadie ve el estado en un punto intermedio.
+The flight's state is touched only by the FlightServer. Any operation on
+the flight is a message to its mailbox, and the mailbox acts as a natural
+critical section: the server processes one message at a time, so the
+state is never observed mid-update from outside.
 
-Si dos pasajeros mandan `:reserve_seat` sobre el mismo asiento al mismo
-tiempo, no hay race condition. El primer mensaje cambia el asiento a
-`:reserved`; cuando el server procesa el segundo, ya lo ve ocupado y
-devuelve `{:error, :seat_not_available}`. No hace falta ningún lock.
+That's why, if two passengers send `:reserve_seat` for the same seat at
+the same time, there's no race condition. The first message changes the
+seat to `:reserved`; when the server processes the second one, the seat
+is already taken and it returns `{:error, :seat_not_available}`. No locks
+needed.
 
 ## Tests
 
-Los tests cubren la capa de dominio: transiciones válidas e inválidas de
-`Seat` y `Reservation`, el flujo completo de reserva sobre el agregado
-`Flight`, casos de error (asiento ya reservado, reserva inexistente,
-cancelar una reserva confirmada) y la idempotencia de
-`expire_reservation/2`. Se corren con `mix test`.
+The tests cover the domain layer: valid and invalid transitions of `Seat`
+and `Reservation`, the full reservation flow against the `Flight`
+aggregate, error cases (seat already reserved, reservation not found,
+cancelling a confirmed reservation) and the idempotency of
+`expire_reservation/2`. Run them with `mix test`.
