@@ -38,9 +38,7 @@ defmodule CondorDelSur.Demo do
     6 => :light_red
   }
 
-  ## ============================================================
-  ## ORQUESTACIÓN
-  ## ============================================================
+  # MANEJO DEL FLUJO
 
   def run do
     print_logo()
@@ -98,13 +96,11 @@ defmodule CondorDelSur.Demo do
     :ok
   end
 
-  ## ============================================================
-  ## FASES
-  ## ============================================================
+  #FASES DE LA DEMO
 
   defp phase_1(competitors) do
     header("FASE 1 · COMPETENCIA POR EL ASIENTO 2")
-    sub("3 pasajeros mandan reserve_seat al mismo tiempo — la mailbox del FlightServer es la sección crítica, sin locks")
+    sub("3 pasajeros mandan reserve_seat al mismo tiempo y solo uno gana — el servidor los procesa en orden de llegada sin locks")
 
     parent = self()
 
@@ -126,7 +122,7 @@ defmodule CondorDelSur.Demo do
 
     case Enum.find(results, fn {_, _, r} -> match?({:ok, _}, r) end) do
       {i, _p, {:ok, rid}} -> {i, rid}
-      _ -> raise "phase 1: nadie ganó la reserva"
+      _ -> raise "Fase 1: nadie ganó la reserva"
     end
   end
 
@@ -176,14 +172,12 @@ defmodule CondorDelSur.Demo do
     info("→ pidiendo cancel_reservation(rid=#{confirmed_rid})…")
 
     case FlightClient.cancel_reservation(confirmed_rid) do
-      :ok -> info(failure("‼  el sistema lo aceptó — BUG en el dominio"))
+      :ok -> info(failure("‼  el sistema lo aceptó — ERROR en el dominio (no deberia pasar)"))
       {:error, r} -> info(success("correctamente rechazado · motivo=#{inspect(r)}"))
     end
   end
 
-  ## ============================================================
-  ## SETUP / TEARDOWN
-  ## ============================================================
+  #Proceso de registro de pasajeros — se abstrae para no mezclarlo con la narrativa de las fases
 
   defp register_pax(list) do
     Enum.reduce(list, %{}, fn {i, name, doc}, acc ->
