@@ -7,6 +7,7 @@ Supervisor, Task, Agent or Registry).
 ## How to run
 
 ```
+cd condor_del_sur/
 mix compile
 mix run -e "CondorDelSur.Demo.run()"
 mix test
@@ -35,7 +36,6 @@ condor_del_sur/
 ├── mix.exs
 ├── README.md
 ├── lib/
-│   ├── condor_del_sur.ex           # Root module
 │   ├── domain/                     # Pure layer (no processes)
 │   │   ├── passenger.ex
 │   │   ├── seat.ex
@@ -51,9 +51,9 @@ condor_del_sur/
 │   └── demo.ex                     # Drives the console demo
 └── test/
     ├── domain/
-    │   ├── flight_test.ex
-    │   ├── reservation_test.ex
-    │   └── seat_test.ex
+    │   ├── flight_test.exs
+    │   ├── reservation_test.exs
+    │   └── seat_test.exs
     └── test_helper.exs
 ```
 
